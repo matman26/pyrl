@@ -11,6 +11,47 @@ import tile_types
 if TYPE_CHECKING:
     from entity import Entity
 
+class Street:
+    def __init__(self, x: int, y:int, width: int, height: int):
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + width
+        self.y2 = y + height
+
+    @property
+    def inner(self) -> Tuple[slice, slice]:
+        """Return the inner area of this room as a 2D array index."""
+        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
+
+
+class RectangularSection:
+    def __init__(self, x1: int, y1: int, x2: int, y2: int):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+
+    @property
+    def center(self) -> Tuple[int, int]:
+        center_x = int((self.x1 + self.x2) / 2)
+        center_y = int((self.y1 + self.y2) / 2)
+
+        return center_x, center_y
+
+    @property
+    def inner(self) -> Tuple[slice, slice]:
+        """Return the inner area of this room as a 2D array index."""
+        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
+
+
+    def intersects(self, other) -> bool:
+        """Return True if this room overlaps with another RectangularRoom."""
+        return (
+            self.x1 <= other.x2
+            and self.x2 >= other.x1
+            and self.y1 <= other.y2
+            and self.y2 >= other.y1
+        )
 
 class RectangularRoom:
     def __init__(self, x: int, y: int, width: int, height: int):
@@ -87,8 +128,8 @@ def place_entities(
 
 def generate_dungeon(
     max_rooms: int,
-    room_min_size: int,
-    room_max_size: int,
+    street_min_size: int,
+    street_max_size: int,
     map_width: int,
     map_height: int,
     max_monsters_per_room: int,
@@ -100,8 +141,8 @@ def generate_dungeon(
     rooms: List[RectangularRoom] = []
 
     for r in range(max_rooms):
-        room_width = random.randint(room_min_size, room_max_size)
-        room_height = random.randint(room_min_size, room_max_size)
+        room_width = random.randint(street_min_size, street_max_size)
+        room_height = random.randint(street_min_size, street_max_size)
 
         x = random.randint(0, dungeon.width - room_width - 1)
         y = random.randint(0, dungeon.height - room_height - 1)
@@ -125,7 +166,7 @@ def generate_dungeon(
             for x, y in tunnel_between(rooms[-1].center, new_room.center):
                 dungeon.tiles[x, y] = tile_types.floor
 
-        place_entities(new_room, dungeon, max_monsters_per_room)
+        #place_entities(new_room, dungeon, max_monsters_per_room)
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
@@ -133,21 +174,83 @@ def generate_dungeon(
 
 def generate_streets(
     max_rooms: int,
-    room_min_size: int,
-    room_max_size: int,
+    street_min_size: int,
+    street_max_size: int,
     map_width: int,
     map_height: int,
-    max_monsters_per_room: int,
+    max_side_streets: int,
     player: Entity,
  ) -> GameMap:
     """Generate a new dungeon map."""
+
     streets = GameMap(map_width, map_height, entities=[player])
 
-    for r in range(max_rooms):
-        building_width  = random.randint(room_min_size, room_max_size)
-        building_height = random.randint(room_min_size, room_max_size)
-        x = random.randint(0, dungeon.width - room_width - 1)
-        y = random.randint(0, dungeon.height - room_height - 1)
+    street_height = random.randint(street_min_size, street_max_size)
+    x = -1
+    y = random.randint(0, streets.height - street_height - 1)
+
+    main_street = Street(x, y,  map_width + 1, street_height) 
+    streets.tiles[main_street.inner] = tile_types.street
+
+    side_streets_number = random.randint(2, max_side_streets)
+
+    corners = []
+
+
+    top_corners = []
+    bottom_corners = [] 
+    for side_street in range(side_streets_number):
+      street_width = random.randint(street_min_size, street_max_size)
+      x =  random.randint(0, streets.width - street_width -1 )
+
+      y = -1
+      st = Street(x, y, street_width, map_height + 1)
+      streets.tiles[st.inner] = tile_types.street
+      #corn = (st.x1,main_street.y1), (st.x1, main_street.y2), (st.x2, main_street.y1), (st.x2, main_street.y2)
+      #corners.append(corn)
+
+      top_corners.extend([(st.x1,main_street.y2),(st.x2,main_street.y2)])
+      bottom_corners.extend([(st.x1,main_street.y1),(st.x2,main_street.y1)])
+
+      streets.tiles[st.x1,main_street.y1] = tile_types.wall
+      streets.tiles[st.x1,main_street.y2] = tile_types.wall
+      streets.tiles[st.x2,main_street.y1] = tile_types.wall
+      streets.tiles[st.x2,main_street.y2] = tile_types.wall
+
+    top_corners.insert(0, (0, main_street.y2))
+    top_corners.append((map_width+1, main_street.y2))
+
+    bottom_corners.insert(0, (0, main_street.y1))
+    bottom_corners.append((map_width+1, main_street.y1))
+
+    it = iter(top_corners)
+    for x in it:
+        p1 = x
+        p2 = next(it)
+
+        x1 = p1[0]
+        x2 = p2[0]
+        y  = p1[1]
+
+        section = RectangularSection(x1,y,x2,map_height+1)
+        streets.tiles[section.inner] = tile_types.toto
+
+    it = iter(bottom_corners)
+    for x in it:
+        p1 = x
+        p2 = next(it)
+
+        x1 = p1[0]
+        x2 = p2[0]
+        y  = p1[1]
+
+        section = RectangularSection(x1,0,x2,y)
+        streets.tiles[section.inner] = tile_types.toto
+
+    print('top',top_corners)
+    print('bottom', bottom_corners)
+
+    return streets
     
 
 def tunnel_between(

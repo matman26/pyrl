@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class GameMap:
     def __init__(self, width: int, height: int, entities: Iterable[Entity]):
         self.width, self.height = width, height
-        self.tiles = np.full((width, height), fill_value=tile_types.wall, order="F")
+        self.tiles = np.full((width, height), fill_value=tile_types.floor, order="F")
         self.entities = set(entities)
 
         self.visible = np.full((width, height), fill_value=False, order="F")

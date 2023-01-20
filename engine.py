@@ -1,5 +1,4 @@
 from typing import Set, Iterable, Any
-
 from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
@@ -18,8 +17,7 @@ class Engine:
         self.update_fov()
 
     def handle_enemy_turns(self) -> None:
-        for entity in self.game_map.entities - {self.player}:
-            print(f'The {entity.name} wonders when it will get to take a real turn.')
+        pass
 
     def handle_events(self, events: Iterable[Any]) -> None:
         for event in events:
@@ -29,7 +27,7 @@ class Engine:
                 continue
 
             action.perform(self, self.player)
-            self.handle_enemy_turns()
+            #self.handle_enemy_turns()
             self.update_fov()
 
     def update_fov(self) -> None:

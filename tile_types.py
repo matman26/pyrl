@@ -17,7 +17,7 @@ tile_dt = np.dtype(
         ("walkable", np.bool_),  # True if this tile can be walked over.
         ("transparent", np.bool_),  # True if this tile doesn't block FOV.
         ("dark", graphic_dt),  # Graphics for when this tile is not in FOV.
-	("light", graphic_dt), # For when the tile is in FOV
+	      ("light", graphic_dt), # For when the tile is in FOV
     ]
 )
 
@@ -39,11 +39,24 @@ floor = new_tile(
     walkable=True,
     transparent=True,
     dark=(ord(" "), (255, 255, 255), (50, 50, 150)),
-    light=(ord(" "), (255, 255, 255), (200, 180, 50)),
+    light=(ord(" "), (255, 255, 255), (54, 58, 64)),
+)
+street = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (255, 255, 255), (2, 34, 87)),
+    light=(ord(" "), (255, 255, 255), (66, 135, 245) ),
 )
 wall = new_tile(
     walkable=False,
     transparent=False,
     dark=(ord(" "), (255, 255, 255), (0, 0, 100)),
     light=(ord(" "), (255, 255, 255), (130, 110, 50)),
+)
+
+toto = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("-"), (255, 255, 255), (0, 0, 100)),
+    light=(ord("-"), (255, 255, 255), (130, 110, 50)),
 )
